@@ -1,194 +1,121 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<title>SafeSpace</title>
-
-<style>
-body{
-  margin:0;
-  font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg,#cfe9e5,#f4f7f6);
-}
-
-.container{
-  max-width:420px;
-  margin:auto;
-  padding:20px;
-}
-
-.card{
-  background:white;
-  border-radius:18px;
-  padding:20px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.1);
-  margin-bottom:20px;
-}
-
-h1{
-  text-align:center;
-  color:#2f7f7f;
-  margin-bottom:5px;
-}
-
-.subtitle{
-  text-align:center;
-  color:#666;
-  font-size:14px;
-}
-
-label{
-  font-weight:600;
-  margin-top:10px;
-  display:block;
-}
-
-input, select, textarea{
-  width:100%;
-  margin-top:6px;
-  padding:12px;
-  border-radius:12px;
-  border:1px solid #ccc;
-  font-size:14px;
-}
-
-textarea{ resize:none; }
-
-button{
-  width:100%;
-  margin-top:15px;
-  padding:14px;
-  border:none;
-  border-radius:14px;
-  background:#4da6a6;
-  color:white;
-  font-size:16px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-button:hover{
-  background:#3d8f8f;
-}
-
-.ai-box{
-  margin-top:15px;
-  background:#e8f5f2;
-  padding:14px;
-  border-radius:14px;
-  color:#2c6e7f;
-  font-size:14px;
-}
-
-.history h3{
-  color:#2f7f7f;
-  margin-bottom:10px;
-}
-
-.entry{
-  background:#f9fefe;
-  border-left:6px solid #4da6a6;
-  padding:12px;
-  border-radius:12px;
-  margin-bottom:10px;
-}
-
-.date{
-  font-weight:bold;
-  color:#333;
-}
-
-.stress-low{ border-left-color:#5cb85c; }
-.stress-mid{ border-left-color:#f0ad4e; }
-.stress-high{ border-left-color:#d9534f; }
-
-.note{
-  font-size:13px;
-  color:#555;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>SafeSpace</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f4f7fb;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #4a6cf7;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+    label {
+      font-weight: bold;
+    }
+    input, textarea, button {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background: #4a6cf7;
+      color: white;
+      border: none;
+      margin-top: 12px;
+    }
+    .history {
+      font-size: 14px;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="container">
+<h1>SafeSpace</h1>
+<p style="text-align:center;">บันทึกความเครียดรายวัน พร้อม AI สรุปอารมณ์</p>
 
-  <div class="card">
-    <h1>SafeSpace 🌱</h1>
-    <div class="subtitle">ปฏิทินบันทึกความเครียดรายวัน</div>
+<div class="card">
+  <label>วันที่</label>
+  <input type="date" id="date">
 
-    <label>เลือกวันที่</label>
-    <input type="date" id="date">
+  <label>ระดับความเครียด (0–10)</label>
+  <input type="number" id="stress" min="0" max="10">
 
-    <label>ระดับความเครียด</label>
-    <select id="stress">
-      <option value="ต่ำ">ต่ำ</option>
-      <option value="ปานกลาง">ปานกลาง</option>
-      <option value="สูง">สูง</option>
-    </select>
+  <label>วันนี้รู้สึกอย่างไร</label>
+  <textarea id="note" rows="3"></textarea>
 
-    <label>บันทึกสั้น ๆ (ไม่บังคับ)</label>
-    <textarea id="note" rows="3" placeholder="วันนี้เป็นอย่างไรบ้าง..."></textarea>
+  <button onclick="saveData()">บันทึก</button>
+</div>
 
-    <button onclick="save()">บันทึก</button>
+<div class="card">
+  <h3>🧠 AI สรุปอารมณ์</h3>
+  <p id="aiResult">ยังไม่มีข้อมูล</p>
+</div>
 
-    <div id="ai" class="ai-box"></div>
-  </div>
-
-  <div class="card history">
-    <h3>ประวัติย้อนหลัง</h3>
-    <div id="list"></div>
-  </div>
-
+<div class="card">
+  <h3>📅 ข้อมูลย้อนหลัง</h3>
+  <div id="history" class="history"></div>
 </div>
 
 <script>
-function aiSummary(level){
-  if(level==="ต่ำ")
-    return "วันนี้ระดับความเครียดต่ำ คุณดูแลตัวเองได้ดี 😊";
-  if(level==="ปานกลาง")
-    return "วันนี้มีความเครียดบ้าง ลองพักผ่อนหรือทำกิจกรรมผ่อนคลาย 🌤️";
-  return "วันนี้ความเครียดค่อนข้างสูง อย่าลืมดูแลสุขภาพใจของตัวเองนะ 🤍";
-}
+  const historyDiv = document.getElementById("history");
+  const aiResult = document.getElementById("aiResult");
 
-function save(){
-  const date = document.getElementById("date").value;
-  const stress = document.getElementById("stress").value;
-  const note = document.getElementById("note").value;
+  function saveData() {
+    const date = document.getElementById("date").value;
+    const stress = document.getElementById("stress").value;
+    const note = document.getElementById("note").value;
 
-  if(!date){
-    alert("กรุณาเลือกวันที่");
-    return;
+    if (!date || stress === "") {
+      alert("กรุณากรอกวันที่และระดับความเครียด");
+      return;
+    }
+
+    const data = JSON.parse(localStorage.getItem("stressData") || "{}");
+    data[date] = { stress, note };
+    localStorage.setItem("stressData", JSON.stringify(data));
+
+    analyzeStress(stress);
+    showHistory();
   }
 
-  const data = JSON.parse(localStorage.getItem("stressLog")) || [];
-  data.push({date, stress, note});
-  localStorage.setItem("stressLog", JSON.stringify(data));
+  function analyzeStress(stress) {
+    let result = "";
+    if (stress <= 3) result = "อารมณ์ค่อนข้างปกติ 🙂";
+    else if (stress <= 6) result = "มีความเครียดระดับปานกลาง 😐";
+    else result = "ความเครียดค่อนข้างสูง ควรพักผ่อน 💙";
 
-  document.getElementById("ai").innerText =
-    "AI สรุป: " + aiSummary(stress);
+    aiResult.innerText = result;
+  }
 
-  document.getElementById("note").value="";
-  render();
-}
+  function showHistory() {
+    const data = JSON.parse(localStorage.getItem("stressData") || "{}");
+    historyDiv.innerHTML = "";
 
-function render(){
-  const list = document.getElementById("list");
-  list.innerHTML="";
-  const data = JSON.parse(localStorage.getItem("stressLog")) || [];
+    Object.keys(data).sort().forEach(date => {
+      historyDiv.innerHTML += `
+        <p><b>${date}</b> | เครียด: ${data[date].stress}/10</p>
+      `;
+    });
+  }
 
-  data.slice().reverse().forEach(d=>{
-    let cls = d.stress==="ต่ำ"?"stress-low":
-              d.stress==="ปานกลาง"?"stress-mid":"stress-high";
-
-    list.innerHTML += `
-      <div class="entry ${cls}">
-        <div class="date">${d.date} • ${d.stress}</div>
-        <div class="note">${d.note || "ไม่มีบันทึกเพิ่มเติม"}</div>
-      </div>`;
-  });
-}
-render();
+  showHistory();
 </script>
 
 </body>
