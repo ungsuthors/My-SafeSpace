@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>SafeSpace</title>
+
+<style>
+body{
+  margin:0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg,#cfe9e5,#f4f7f6);
+}
+
+.container{
+  max-width:420px;
+  margin:auto;
+  padding:20px;
+}
+
+.card{
+  background:white;
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.1);
+  margin-bottom:20px;
+}
+
+h1{
+  text-align:center;
+  color:#2f7f7f;
+  margin-bottom:5px;
+}
+
+.subtitle{
+  text-align:center;
+  color:#666;
+  font-size:14px;
+}
+
+label{
+  font-weight:600;
+  margin-top:10px;
+  display:block;
+}
+
+input, select, textarea{
+  width:100%;
+  margin-top:6px;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid #ccc;
+  font-size:14px;
+}
+
+textarea{ resize:none; }
+
+button{
+  width:100%;
+  margin-top:15px;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  background:#4da6a6;
+  color:white;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#3d8f8f;
+}
+
+.ai-box{
+  margin-top:15px;
+  background:#e8f5f2;
+  padding:14px;
+  border-radius:14px;
+  color:#2c6e7f;
+  font-size:14px;
+}
+
+.history h3{
+  color:#2f7f7f;
+  margin-bottom:10px;
+}
+
+.entry{
+  background:#f9fefe;
+  border-left:6px solid #4da6a6;
+  padding:12px;
+  border-radius:12px;
+  margin-bottom:10px;
+}
+
+.date{
+  font-weight:bold;
+  color:#333;
+}
+
+.stress-low{ border-left-color:#5cb85c; }
+.stress-mid{ border-left-color:#f0ad4e; }
+.stress-high{ border-left-color:#d9534f; }
+
+.note{
+  font-size:13px;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="card">
+    <h1>SafeSpace 🌱</h1>
+    <div class="subtitle">ปฏิทินบันทึกความเครียดรายวัน</div>
+
+    <label>เลือกวันที่</label>
+    <input type="date" id="date">
+
+    <label>ระดับความเครียด</label>
+    <select id="stress">
+      <option value="ต่ำ">ต่ำ</option>
+      <option value="ปานกลาง">ปานกลาง</option>
+      <option value="สูง">สูง</option>
+    </select>
+
+    <label>บันทึกสั้น ๆ (ไม่บังคับ)</label>
+    <textarea id="note" rows="3" placeholder="วันนี้เป็นอย่างไรบ้าง..."></textarea>
+
+    <button onclick="save()">บันทึก</button>
+
+    <div id="ai" class="ai-box"></div>
+  </div>
+
+  <div class="card history">
+    <h3>ประวัติย้อนหลัง</h3>
+    <div id="list"></div>
+  </div>
+
+</div>
+
+<script>
+function aiSummary(level){
+  if(level==="ต่ำ")
+    return "วันนี้ระดับความเครียดต่ำ คุณดูแลตัวเองได้ดี 😊";
+  if(level==="ปานกลาง")
+    return "วันนี้มีความเครียดบ้าง ลองพักผ่อนหรือทำกิจกรรมผ่อนคลาย 🌤️";
+  return "วันนี้ความเครียดค่อนข้างสูง อย่าลืมดูแลสุขภาพใจของตัวเองนะ 🤍";
+}
+
+function save(){
+  const date = document.getElementById("date").value;
+  const stress = document.getElementById("stress").value;
+  const note = document.getElementById("note").value;
+
+  if(!date){
+    alert("กรุณาเลือกวันที่");
+    return;
+  }
+
+  const data = JSON.parse(localStorage.getItem("stressLog")) || [];
+  data.push({date, stress, note});
+  localStorage.setItem("stressLog", JSON.stringify(data));
+
+  document.getElementById("ai").innerText =
+    "AI สรุป: " + aiSummary(stress);
+
+  document.getElementById("note").value="";
+  render();
+}
+
+function render(){
+  const list = document.getElementById("list");
+  list.innerHTML="";
+  const data = JSON.parse(localStorage.getItem("stressLog")) || [];
+
+  data.slice().reverse().forEach(d=>{
+    let cls = d.stress==="ต่ำ"?"stress-low":
+              d.stress==="ปานกลาง"?"stress-mid":"stress-high";
+
+    list.innerHTML += `
+      <div class="entry ${cls}">
+        <div class="date">${d.date} • ${d.stress}</div>
+        <div class="note">${d.note || "ไม่มีบันทึกเพิ่มเติม"}</div>
+      </div>`;
+  });
+}
+render();
+</script>
+
+</body>
+</html>
